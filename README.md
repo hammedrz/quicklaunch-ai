@@ -60,7 +60,7 @@ A blazing-fast, floating **Spotlight / Raycast-style** AI launcher for Windows, 
 
 1. Clone the repository:
    ```powershell
-   git clone https://github.com/<your-username>/quicklaunch-ai.git
+   git clone https://github.com/hammedrz/quicklaunch-ai.git
    cd quicklaunch-ai
    ```
 
