@@ -89,11 +89,11 @@ class ModelSelector(QPushButton):
 
     def _get_active_model(self) -> str:
         if self._mode == "agent":
-            return config.agent_model or "gemini-2.5-flash"
+            return config.agent_model or "gemini-3.1-flash-lite"
         elif self._mode == "cli":
             return config.cli_model or "default"
         else:
-            return config.simple_model or "gemini-2.5-flash"
+            return config.simple_model or "gemini-3.1-flash-lite"
 
     def _update_label(self):
         active = self._get_active_model()
@@ -132,11 +132,11 @@ class ModelSelector(QPushButton):
 
     def _select_model(self, model_id: str):
         if self._mode == "agent":
-            config.agent_model = model_id or "gemini-2.5-flash"
+            config.agent_model = model_id or "gemini-3.1-flash-lite"
         elif self._mode == "cli":
             config.cli_model = model_id
         else:
-            config.simple_model = model_id or "gemini-2.5-flash"
+            config.simple_model = model_id or "gemini-3.1-flash-lite"
 
         self._update_label()
         self.model_changed.emit(self._mode, model_id)

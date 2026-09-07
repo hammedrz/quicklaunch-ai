@@ -15,7 +15,8 @@ logger = logging.getLogger("QuickLaunch.ModelRegistry")
 
 # Default curated free-tier models (fallback when offline or before initial sync)
 DEFAULT_FREE_TIER_MODELS: List[Tuple[str, str]] = [
-    ("gemini-2.5-flash", "⚡ gemini-2.5-flash (Fast • Default)"),
+    ("gemini-3.1-flash-lite", "⚡ gemini-3.1-flash-lite (Fast • Default)"),
+    ("gemini-2.5-flash", "⚡ gemini-2.5-flash (Fast)"),
     ("gemini-2.5-flash-lite", "⚡ gemini-2.5-flash-lite (Ultra Fast)"),
     ("gemini-3.5-flash", "🚀 gemini-3.5-flash (Next-Gen Flash)"),
     ("gemini-3.5-flash-lite", "🚀 gemini-3.5-flash-lite (Next-Gen Lite)"),
@@ -23,7 +24,6 @@ DEFAULT_FREE_TIER_MODELS: List[Tuple[str, str]] = [
     ("gemma-4-31b-it", "💎 gemma-4-31b-it (Google Open 31B)"),
     ("gemma-4-26b-a4b-it", "💎 gemma-4-26b-a4b-it (Google Open 26B MoE)"),
     ("gemini-3.1-pro-preview", "🔬 gemini-3.1-pro-preview (Pro Preview)"),
-    ("gemini-3.1-flash-lite", "⚡ gemini-3.1-flash-lite (Flash Lite)"),
 ]
 
 # Non-conversational or paid-only special capability keywords to exclude
@@ -72,20 +72,22 @@ def _format_model_badge(model_id: str, display_name: str) -> str:
 def _model_sort_key(item: Tuple[str, str]) -> int:
     """Sort priority: Flash standard first, then Flash-Lite, then 3.x Flash, then Gemma, then Pro."""
     model_id = item[0].lower()
-    if model_id == "gemini-2.5-flash":
+    if model_id == "gemini-3.1-flash-lite":
         return 0
-    if model_id == "gemini-2.5-flash-lite":
+    if model_id == "gemini-2.5-flash":
         return 1
-    if model_id == "gemini-3.5-flash":
+    if model_id == "gemini-2.5-flash-lite":
         return 2
-    if model_id == "gemini-3.5-flash-lite":
+    if model_id == "gemini-3.5-flash":
         return 3
-    if model_id == "gemini-3.7-flash":
+    if model_id == "gemini-3.5-flash-lite":
         return 4
-    if model_id == "gemma-4-31b-it":
+    if model_id == "gemini-3.7-flash":
         return 5
-    if model_id == "gemma-4-26b-a4b-it":
+    if model_id == "gemma-4-31b-it":
         return 6
+    if model_id == "gemma-4-26b-a4b-it":
+        return 7
     if "flash-lite" in model_id:
         return 10
     if "flash" in model_id:

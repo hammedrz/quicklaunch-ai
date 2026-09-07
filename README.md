@@ -39,7 +39,7 @@ A blazing-fast, floating **Spotlight / Raycast-style** AI launcher for Windows, 
 | `Ctrl+Space` (Global) | Show / Hide Launcher |
 | `Enter` | Submit Prompt / Execute Command |
 | `Tab` | Cycle Mode (`⚡ Simple` ↔ `🤖 Agent` ↔ `🚀 CLI`) |
-| `Ctrl+P` | Select Model (`gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3.5-flash`, etc.) |
+| `Ctrl+P` | Select Model (`gemini-3.1-flash-lite`, `gemini-2.5-flash`, `gemini-3.5-flash`, etc.) |
 | `Up` / `Down` | Navigate Query History |
 | `Esc` | Hide Launcher / Abort Active Query |
 | `Ctrl+C` | Smart Copy (Selected text, or full AI response if none selected) |
@@ -91,8 +91,8 @@ GEMINI_API_KEY=your_gemini_api_key_here
 DEFAULT_MODE=simple
 
 # Models
-SIMPLE_MODEL=gemini-2.5-flash
-AGENT_MODEL=gemini-2.5-flash
+SIMPLE_MODEL=gemini-3.1-flash-lite
+AGENT_MODEL=gemini-3.1-flash-lite
 CLI_MODEL=
 
 # Global Hotkey (e.g. "ctrl+space", "alt+space", "win+space")

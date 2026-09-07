@@ -72,10 +72,10 @@ class AppConfig:
         default_factory=lambda: os.getenv("GEMINI_API_KEY", "").strip()
     )
     simple_model: str = field(
-        default_factory=lambda: os.getenv("SIMPLE_MODEL", "gemini-2.5-flash").strip() or "gemini-2.5-flash"
+        default_factory=lambda: os.getenv("SIMPLE_MODEL", "gemini-3.1-flash-lite").strip() or "gemini-3.1-flash-lite"
     )
     agent_model: str = field(
-        default_factory=lambda: os.getenv("AGENT_MODEL", "gemini-2.5-flash").strip() or "gemini-2.5-flash"
+        default_factory=lambda: os.getenv("AGENT_MODEL", "gemini-3.1-flash-lite").strip() or "gemini-3.1-flash-lite"
     )
     cli_model: str = field(
         default_factory=lambda: os.getenv("CLI_MODEL", "").strip()
