@@ -1,5 +1,10 @@
 """System tray manager for QuickLaunch AI running persistently in the background."""
+import logging
+import os
+import sys
 from typing import Callable, Optional
+
+logger = logging.getLogger("QuickLaunch.Tray")
 
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QAction, QBrush, QColor, QIcon, QPainter, QPixmap, QPolygonF
@@ -105,12 +110,37 @@ class SystemTrayManager:
 
         self._menu.addSeparator()
 
+        logs_action = QAction("View Logs (quicklaunch.log)", self._menu)
+        logs_action.triggered.connect(self._open_log_file)
+        self._menu.addAction(logs_action)
+
         quit_action = QAction("Exit QuickLaunch AI", self._menu)
         quit_action.triggered.connect(self.on_quit)
         self._menu.addAction(quit_action)
 
         self._tray.setContextMenu(self._menu)
         self._tray.activated.connect(self._on_tray_click)
+
+    def _open_log_file(self):
+        """Opens the persistent application log file in the default system viewer."""
+        try:
+            from ..logger import get_log_file_path
+            log_path = get_log_file_path()
+            if log_path.exists():
+                logger.info("Opening log file in default application: %s", log_path)
+                if sys.platform == "win32":
+                    os.startfile(str(log_path))
+                else:
+                    import subprocess
+                    subprocess.Popen(["xdg-open", str(log_path)])
+            else:
+                self.show_notification(
+                    "QuickLaunch AI Logs",
+                    f"Log file not yet created at:\n{log_path}",
+                    is_warning=True,
+                )
+        except Exception as err:
+            logger.error("Failed to open log file: %s", err)
 
     def _get_open_label(self, hotkey: Optional[str]) -> str:
         if hotkey:

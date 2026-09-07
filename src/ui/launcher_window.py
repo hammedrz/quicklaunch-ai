@@ -1,6 +1,9 @@
 """Main launcher window: frameless, floating, Raycast-style AI bar with 3-mode support."""
+import logging
 import sys
 from typing import Optional
+
+logger = logging.getLogger("QuickLaunch.UI")
 
 from PySide6.QtCore import (
     QPoint,
@@ -98,17 +101,21 @@ class LauncherWindow(QWidget):
         self._resize_timer.timeout.connect(self._do_adjust_window_size)
 
         # Keyboard shortcuts
-        QShortcut(QKeySequence("Escape"), self).activated.connect(self.dismiss)
-        QShortcut(QKeySequence("Ctrl+L"), self).activated.connect(self._clear_all)
-        QShortcut(QKeySequence("Ctrl+C"), self).activated.connect(self._smart_copy)
-        QShortcut(QKeySequence("Ctrl+M"), self).activated.connect(
-            self.search_bar.mode_pill.toggle
-        )
-        QShortcut(QKeySequence("Ctrl+P"), self).activated.connect(
-            self.search_bar.model_selector.show_menu
-        )
-        QShortcut(QKeySequence("Ctrl+Shift+R"), self).activated.connect(self.recenter)
-        QShortcut(QKeySequence("Ctrl+,"), self).activated.connect(self.open_settings)
+        def _bind_shortcut(key_seq: str, action, desc: str):
+            sc = QShortcut(QKeySequence(key_seq), self)
+            def _handler():
+                logger.info("[Window Shortcut] '%s' triggered -> %s", key_seq, desc)
+                action()
+            sc.activated.connect(_handler)
+            return sc
+
+        _bind_shortcut("Escape", self.dismiss, "dismiss launcher window")
+        _bind_shortcut("Ctrl+L", self._clear_all, "clear input and results")
+        _bind_shortcut("Ctrl+C", self._smart_copy, "smart copy")
+        _bind_shortcut("Ctrl+M", self.search_bar.mode_pill.toggle, "toggle mode")
+        _bind_shortcut("Ctrl+P", self.search_bar.model_selector.show_menu, "show model selector menu")
+        _bind_shortcut("Ctrl+Shift+R", self.recenter, "recenter window on monitor")
+        _bind_shortcut("Ctrl+,", self.open_settings, "open settings dialog")
 
         # Drag & positioning state
         self._drag_pos: Optional[QPoint] = None
@@ -190,11 +197,24 @@ class LauncherWindow(QWidget):
 
     def summon(self):
         """Shows and brings the launcher into foreground focus on Windows."""
+        logger.info(
+            "[Hotkey][Step 7: Window Summon] summon() requested (user_moved=%s, current pos=(%d, %d))",
+            self._user_moved,
+            self.x(),
+            self.y(),
+        )
         if not self._user_moved:
             self._position_on_screen()
         else:
             self._ensure_on_screen()
 
+        logger.debug(
+            "[Hotkey][Step 7: Window Summon] Target position: (%d, %d), size: (%d, %d)",
+            self.x(),
+            self.y(),
+            self.width(),
+            self.height(),
+        )
         self.show()
         self.raise_()
         self.activateWindow()
@@ -221,13 +241,27 @@ class LauncherWindow(QWidget):
                         user32.SetForegroundWindow(hwnd)
                 else:
                     user32.SetForegroundWindow(hwnd)
-            except Exception:
-                pass
+                logger.debug(
+                    "[Hotkey][Step 7: Window Summon] Win32 SetForegroundWindow executed for HWND 0x%X",
+                    hwnd,
+                )
+            except Exception as e:
+                logger.warning(
+                    "[Hotkey][Step 7: Window Summon] Win32 SetForegroundWindow warning: %s",
+                    e,
+                )
 
         self.search_bar.focus_input()
+        logger.info(
+            "[Hotkey][Step 7: Window Summon OK] LauncherWindow is now visible and input focused. "
+            "(isVisible=%s, isActiveWindow=%s)",
+            self.isVisible(),
+            self.isActiveWindow(),
+        )
 
     def dismiss(self):
         """Hides launcher and cleanly recovers worker state."""
+        logger.info("[Hotkey][Step 7: Window Dismiss] dismiss() requested, hiding window.")
         self._drag_pos = None
         if QApplication.overrideCursor():
             QApplication.restoreOverrideCursor()

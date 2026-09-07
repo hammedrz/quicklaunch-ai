@@ -2,6 +2,7 @@
 import atexit
 import ctypes
 from ctypes import wintypes
+import logging
 import os
 import signal
 import sys
@@ -13,9 +14,12 @@ from PySide6.QtWidgets import QApplication
 from src.ai.model_registry import model_registry
 from src.config import config
 from src.hotkey import GlobalHotkeyManager
+from src.logger import setup_logging
 from src.state_manager import state_manager
 from src.ui.launcher_window import LauncherWindow
 from src.ui.tray import SystemTrayManager
+
+logger = logging.getLogger("QuickLaunch.Main")
 
 
 def set_windows_app_user_model_id():
@@ -24,7 +28,9 @@ def set_windows_app_user_model_id():
         try:
             my_appid = "QuickLaunchAI.Launcher.Desktop.1.0"
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(my_appid)
+            logger.debug("Set AppUserModelID to '%s'", my_appid)
         except Exception as e:
+            logger.warning("Failed to set AppUserModelID: %s", e)
             print(f"[Warning] Failed to set AppUserModelID: {e}")
 
 
@@ -48,6 +54,7 @@ def check_single_instance():
         if hwnd:
             user32.ShowWindow(hwnd, 5)  # SW_SHOW
             user32.SetForegroundWindow(hwnd)
+        logger.warning("Another instance of QuickLaunch AI is already running. Brought existing instance to foreground.")
         print("[Info] QuickLaunch AI is already running. Brought existing instance to foreground.")
         sys.exit(0)
 
@@ -55,6 +62,15 @@ def check_single_instance():
 
 
 def main():
+    # Initialize application logging (console + rotating file)
+    log_file = setup_logging()
+    logger.info("=" * 60)
+    logger.info("QuickLaunch AI starting up (PID: %d)", os.getpid())
+    logger.info("Persistent Log File: %s", log_file)
+    logger.info("Python: %s | Platform: %s", sys.version.split()[0], sys.platform)
+    logger.info("Configured LAUNCHER_HOTKEY: '%s'", config.hotkey)
+    logger.info("=" * 60)
+
     # Enforce single instance to prevent duplicate processes from hijacking global hotkeys
     app_mutex = check_single_instance()
 
@@ -85,9 +101,22 @@ def main():
     )
 
     def on_hotkey(hid: int):
-        if launcher.isVisible() and launcher.isActiveWindow():
+        hotkey_name = hotkey_manager._registered_ids.get(hid, f"ID {hid}")
+        is_visible = launcher.isVisible()
+        is_active = launcher.isActiveWindow()
+        logger.info(
+            "[Hotkey][Step 6: App Handler] Hotkey signal received for '%s' (ID %d). "
+            "LauncherWindow state: isVisible=%s, isActiveWindow=%s",
+            hotkey_name,
+            hid,
+            is_visible,
+            is_active,
+        )
+        if is_visible and is_active:
+            logger.info("[Hotkey][Step 6: App Handler] Window is visible & active -> Calling launcher.dismiss()")
             launcher.dismiss()
         else:
+            logger.info("[Hotkey][Step 6: App Handler] Window is hidden or inactive -> Calling launcher.summon()")
             launcher.summon()
 
     hotkey_manager.hotkey_triggered.connect(on_hotkey)
@@ -195,7 +224,16 @@ def main():
     def show_startup_notice():
         if active_hotkey:
             pretty_key = active_hotkey.replace("+", " + ").title()
+            all_active = list(hotkey_manager._registered_ids.values())
+            other_active = [k for k in all_active if k.lower() != active_hotkey.lower()]
             if active_hotkey.lower() != config.hotkey.lower():
+                logger.warning(
+                    "[Hotkey] Preferred hotkey '%s' was unavailable. "
+                    "Active primary hotkey is '%s' (press to summon/dismiss). Alternate triggers: %s",
+                    config.hotkey,
+                    active_hotkey,
+                    other_active,
+                )
                 tray.show_notification(
                     "QuickLaunch AI (Fallback Hotkey)",
                     f"'{config.hotkey}' was taken by another app. "
@@ -203,11 +241,22 @@ def main():
                     is_warning=True,
                 )
             else:
+                logger.info(
+                    "[Hotkey] QuickLaunch AI ready! Primary hotkey: '%s'%s. "
+                    "Press anywhere in Windows to summon / dismiss. Persistent log file: %s",
+                    active_hotkey,
+                    f" (alternate triggers: {other_active})" if other_active else "",
+                    log_file,
+                )
                 tray.show_notification(
                     "QuickLaunch AI is running",
                     f"Press {pretty_key} to summon / dismiss.",
                 )
         else:
+            logger.critical(
+                "[Hotkey] FAILED to register any global hotkey candidates! "
+                "The application will only open via the system tray icon or taskbar."
+            )
             tray.show_notification(
                 "QuickLaunch AI Warning",
                 "Could not register any global hotkeys. Click the tray icon to open.",
