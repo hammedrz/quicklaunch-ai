@@ -68,7 +68,9 @@ def main():
     logger.info("QuickLaunch AI starting up (PID: %d)", os.getpid())
     logger.info("Persistent Log File: %s", log_file)
     logger.info("Python: %s | Platform: %s", sys.version.split()[0], sys.platform)
+    is_autostart = "--autostart" in sys.argv
     logger.info("Configured LAUNCHER_HOTKEY: '%s'", config.hotkey)
+    logger.info("Launch Mode: %s", "Windows Autostart (Silent Background)" if is_autostart else "Manual / Interactive")
     logger.info("=" * 60)
 
     # Enforce single instance to prevent duplicate processes from hijacking global hotkeys
@@ -263,7 +265,10 @@ def main():
                 is_warning=True,
             )
 
-    QTimer.singleShot(300, show_startup_notice)
+    if not is_autostart:
+        QTimer.singleShot(300, show_startup_notice)
+    else:
+        logger.info("[Startup] QuickLaunch AI started silently in system tray via Windows Startup apps.")
 
     # Set default mode from config or saved state
     initial_mode = getattr(launcher, "_saved_mode", config.default_mode)

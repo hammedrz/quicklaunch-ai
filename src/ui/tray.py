@@ -11,6 +11,7 @@ from PySide6.QtGui import QAction, QBrush, QColor, QIcon, QPainter, QPixmap, QPo
 from PySide6.QtWidgets import QMenu, QSystemTrayIcon
 
 from . import styles
+from ..autostart import is_autostart_enabled, toggle_autostart
 
 
 def create_tray_icon() -> QIcon:
@@ -103,6 +104,13 @@ class SystemTrayManager:
             settings_action.triggered.connect(self.on_settings)
             self._menu.addAction(settings_action)
 
+        # Startup registration toggle
+        self._autostart_action = QAction("Run at Startup", self._menu)
+        self._autostart_action.setCheckable(True)
+        self._autostart_action.setChecked(is_autostart_enabled())
+        self._autostart_action.triggered.connect(self._on_autostart_toggled)
+        self._menu.addAction(self._autostart_action)
+
         if self.on_clear_history:
             clear_hist_action = QAction("Clear Query History", self._menu)
             clear_hist_action.triggered.connect(self.on_clear_history)
@@ -118,8 +126,27 @@ class SystemTrayManager:
         quit_action.triggered.connect(self.on_quit)
         self._menu.addAction(quit_action)
 
+        self._menu.aboutToShow.connect(self._sync_autostart_state)
         self._tray.setContextMenu(self._menu)
         self._tray.activated.connect(self._on_tray_click)
+
+    def _sync_autostart_state(self):
+        """Synchronizes checkbox with actual OS/Task Manager state when menu opens."""
+        self._autostart_action.setChecked(is_autostart_enabled())
+
+    def _on_autostart_toggled(self, checked: bool):
+        """Handles user toggling the 'Run at Startup' menu option."""
+        success, msg = toggle_autostart(checked)
+        if success:
+            logger.info("Startup status updated: %s", msg)
+        else:
+            logger.warning("Failed to update startup status: %s", msg)
+            self._autostart_action.setChecked(not checked)
+            self.show_notification(
+                "Startup Configuration",
+                f"Could not update startup status: {msg}",
+                is_warning=True,
+            )
 
     def _open_log_file(self):
         """Opens the persistent application log file in the default system viewer."""

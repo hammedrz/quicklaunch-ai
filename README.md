@@ -14,6 +14,7 @@ A blazing-fast, floating **Spotlight / Raycast-style** AI launcher for Windows, 
   - Global system-wide hotkey (`Ctrl+Space` by default, customizable in `.env` or settings).
   - Robust 64-bit `WM_HOTKEY` native message filtering with 200ms debounce and automatic conflict cascading.
   - Multi-resolution system tray icon with dark-mode context menu.
+  - **Run on Startup & Task Manager Integration**: Registers directly into Windows Task Manager's **Startup apps** section as `QuickLaunch AI` (preventing generic `python` or `Program` labels) with two-way enable/disable sync and silent background boot (`--autostart`).
   - Windows Taskbar `AppUserModelID` grouping.
 - **Raycast-Style Fluid UI**:
   - Borderless frameless dark glass window with subtle borders and shadows.
@@ -109,7 +110,7 @@ SANDBOX_TIMEOUT=5.0
 
 ## 🧪 Running Tests
 
-The test suite contains 86 comprehensive unit and integration tests covering all modules, services, widgets, and security boundaries:
+The test suite contains 105 comprehensive unit and integration tests covering all modules, services, widgets, autostart, and security boundaries:
 
 ```powershell
 uv run pytest
@@ -124,11 +125,12 @@ quicklaunch-ai/
 ├── src/
 │   ├── ai/               # Simple, Agent, and CLI services, sandbox, tools
 │   ├── ui/               # Frameless launcher window, Markdown view, dialogs, styles
+│   ├── autostart.py      # Windows Startup Apps & Task Manager synchronization
 │   ├── config.py         # App configuration and environment loading
 │   ├── hotkey.py         # Win32 global hotkey registration & Qt filter
 │   ├── state_manager.py  # Persistent window coordinates & query history
 │   └── worker.py         # Background QThread for async stream processing
-├── tests/                # 86 automated test cases
+├── tests/                # 105 automated test cases
 ├── docs/                 # Architectural specifications
 ├── main.py               # Main application entry point
 ├── pyproject.toml        # Project metadata and dependencies

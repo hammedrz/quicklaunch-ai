@@ -113,18 +113,43 @@ Agent Mode unleashes the full `google-antigravity` framework:
 
 ---
 
-### 7. Project Directory Structure
+---
+
+### 7. Windows Startup & Task Manager Integration
+
+QuickLaunch AI provides a native **"Run at Startup"** capability engineered specifically for Windows Task Manager compatibility:
+
+* **Name Resolution in Task Manager**:
+  * Instead of registering a direct Python executable in `HKCU\...\Run` (which causes Task Manager to display generic labels like `"Python"` or `"pythonw"`), QuickLaunch AI creates a formatted Windows shortcut (`QuickLaunch AI.lnk`) in `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`.
+  * Task Manager's **Startup apps** section uses the `.lnk` file's name (`QuickLaunch AI`), guaranteeing correct display, icon, and publisher attribution.
+* **Development vs. Production Targets**:
+  * **Development Mode**: Targets `pythonw.exe` with `"{project_root}/main.py" --autostart`, ensuring no terminal window flashes on system boot.
+  * **Production Mode**: When packaged (`sys.frozen`), dynamically targets the compiled binary (`sys.executable`).
+  * Explicitly pins `WorkingDirectory` to the project root so `.env` and configuration paths resolve reliably.
+* **Two-Way Task Manager Synchronization**:
+  * Inspects `HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder`.
+  * When a user enables or disables QuickLaunch AI inside Task Manager's "Startup apps" tab, Windows records a binary flag (`0x02` = enabled, `0x03` = disabled). The tray menu dynamically checks this key on opening to ensure the UI checkbox always matches Task Manager's state.
+* **Silent Boot Mode (`--autostart`)**:
+  * When launched with the `--autostart` argument, the application initializes quietly into the system tray, suppressing the welcome balloon notice and keeping the launcher window dismissed until the user presses the global hotkey.
+
+---
+
+### 8. Project Directory Structure
 
 ```
 quicklaunch-ai/
 ├── src/
 │   ├── __init__.py
+│   ├── autostart.py           # Windows Startup Apps & Task Manager synchronization
 │   ├── config.py              # Application settings, mode preferences, API keys, hotkeys
 │   ├── hotkey.py              # Windows Win32 RegisterHotKey & native Qt event filter
+│   ├── logger.py              # Rotating file and console logging configuration
+│   ├── state_manager.py       # Persistent window coordinates & query history
 │   ├── ai/
 │   │   ├── __init__.py
 │   │   ├── simple_service.py  # Mode 1: Fast GenAI stream + Search + Sandboxed Code Exec
 │   │   ├── agent_service.py   # Mode 2: Google Antigravity Agent + full SDK capabilities
+│   │   ├── model_registry.py  # Gemini model discovery & cache management
 │   │   ├── sandbox.py         # Sandboxed Python code executor for Mode 1
 │   │   ├── hooks.py           # Antigravity SDK lifecycle hooks for Mode 2
 │   │   └── tools/             # Shared & custom tools
@@ -138,17 +163,21 @@ quicklaunch-ai/
 │   │   ├── thought_view.py    # Collapsible agent reasoning ("Thinking...") viewer
 │   │   ├── result_view.py     # Markdown renderer with syntax highlighting & citation chips
 │   │   ├── status_bar.py      # Contextual keyboard hints (⏎ Submit, Tab Mode, Esc Dismiss)
-│   │   ├── tray.py            # Windows System Tray icon & quick toggle menu
+│   │   ├── tray.py            # Windows System Tray icon, menu, & autostart toggle
+│   │   ├── api_key_dialog.py  # Settings modal for Gemini API key configuration
+│   │   ├── drag_handle.py     # Frameless window drag region
 │   │   └── styles.py          # Raycast-inspired dark theme QSS & acrylic effects
 │   └── worker.py              # Background QThread handling both Simple & Agent execution
 ├── docs/
 │   └── architecture.md        # This architectural specification
 ├── tests/
 │   ├── __init__.py
+│   ├── test_autostart.py      # Unit tests for Startup apps & Task Manager registry sync
 │   ├── test_config.py         # Unit tests for settings and mode selection
+│   ├── test_hotkey.py         # Unit tests for hotkey parsing and Win32 registration
 │   ├── test_sandbox.py        # Unit tests for sandboxed code execution
 │   └── test_tools.py          # Unit tests for local system tools
-├── main.py                    # Application entry point
+├── main.py                    # Application entry point with --autostart support
 ├── pyproject.toml
 └── .env.example
 ```
