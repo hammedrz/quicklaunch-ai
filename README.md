@@ -2,6 +2,10 @@
 
 A blazing-fast, floating **Spotlight / Raycast-style** AI launcher for Windows, powered by **PySide6**, the **Google GenAI SDK**, the **Antigravity Agent SDK**, and the **Antigravity CLI (`agy`)**.
 
+<p align="center">
+  <img src="assets/screenshot.png" alt="QuickLaunch AI Preview" />
+</p>
+
 ---
 
 ## ✨ Features
@@ -122,6 +126,7 @@ uv run pytest
 
 ```
 quicklaunch-ai/
+├── assets/               # Screenshots and media assets
 ├── src/
 │   ├── ai/               # Simple, Agent, and CLI services, sandbox, tools
 │   ├── ui/               # Frameless launcher window, Markdown view, dialogs, styles
